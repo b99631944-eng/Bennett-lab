@@ -27,6 +27,15 @@ const HORROR_CHARACTERS = [
   { id: '3', name: 'Freddy Krueger', emoji: '😈' },
 ]
 
+// Game constants
+const GAME_DURATION_SECONDS = 180
+const PLAYER_SPEED = 10
+const COLLISION_THRESHOLD = 30
+const PLAYER_MIN_X = 20
+const PLAYER_MAX_X = 780
+const PLAYER_MIN_Y = 20
+const PLAYER_MAX_Y = 550
+
 export default function Home() {
   const [playerName, setPlayerName] = useState('')
   const [gameStarted, setGameStarted] = useState(false)
@@ -36,7 +45,7 @@ export default function Home() {
   const [characters, setCharacters] = useState<HorrorCharacter[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [score, setScore] = useState(0)
-  const [timeLeft, setTimeLeft] = useState(180)
+  const [timeLeft, setTimeLeft] = useState(GAME_DURATION_SECONDS)
   const [gameOver, setGameOver] = useState(false)
 
   // Generate random house layout
@@ -72,7 +81,7 @@ export default function Home() {
     if (playerName.trim()) {
       setGameStarted(true)
       setScore(0)
-      setTimeLeft(180)
+      setTimeLeft(GAME_DURATION_SECONDS)
       setGameOver(false)
       generateHouse()
       placeCharacters()
@@ -84,23 +93,22 @@ export default function Home() {
     if (!gameStarted || gameOver) return
 
     const handleKeyPress = (e: KeyboardEvent) => {
-      const speed = 10
       switch(e.key) {
         case 'ArrowUp':
         case 'w':
-          setPlayerY(prev => Math.max(20, prev - speed))
+          setPlayerY(prev => Math.max(PLAYER_MIN_Y, prev - PLAYER_SPEED))
           break
         case 'ArrowDown':
         case 's':
-          setPlayerY(prev => Math.min(550, prev + speed))
+          setPlayerY(prev => Math.min(PLAYER_MAX_Y, prev + PLAYER_SPEED))
           break
         case 'ArrowLeft':
         case 'a':
-          setPlayerX(prev => Math.max(20, prev - speed))
+          setPlayerX(prev => Math.max(PLAYER_MIN_X, prev - PLAYER_SPEED))
           break
         case 'ArrowRight':
         case 'd':
-          setPlayerX(prev => Math.min(780, prev + speed))
+          setPlayerX(prev => Math.min(PLAYER_MAX_X, prev + PLAYER_SPEED))
           break
       }
     }
@@ -135,7 +143,7 @@ export default function Home() {
         const distance = Math.sqrt(
           Math.pow(playerX - char.x, 2) + Math.pow(playerY - char.y, 2)
         )
-        if (distance < 30) {
+        if (distance < COLLISION_THRESHOLD) {
           setCharacters(prev => {
             const updated = [...prev]
             updated[index].found = true
