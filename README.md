@@ -1,27 +1,34 @@
-# Horror Finder Game 👻
+# Horror & Elf Finder Game 👻🎄
 
-A thrilling browser-based game where players navigate through randomly generated houses to find horror characters before time runs out!
+A thrilling browser-based game where players navigate through randomly generated houses to find horror characters or festive elves before time runs out!
 
 ## Features
 
-- **Three Game Modes**:
+- **Four Game Modes**:
+  - 🎅 **Elf Find Mode**: Festive Christmas theme where you find 3 elves and Santa in 59 seconds! Santa is worth 10 billion points!
   - 🏚️ **Realistic Mode**: Dark, atmospheric visuals for a serious horror experience
   - 🎨 **Animated Mode**: Colorful, friendly appearance for a lighter experience
   - 💀 **Normal Mode (Scary)**: Red and black theme with pulsing effects - the scariest mode!
 
 - **Random House Generation**: Each playthrough generates a unique house layout with 6-10 randomly placed rooms
-- **Horror Characters**: Find iconic horror characters including Pennywise (🤡), Michael Myers (🔪), and Freddy Krueger (😈)
+- **Multiple Character Sets**: 
+  - **Elf Mode**: Find Elf Helper (🧝), Elf Worker (🧝‍♀️), Elf Builder (🧝‍♂️), and Santa Claus (🎅)
+  - **Horror Mode**: Find Pennywise (🤡), Michael Myers (🔪), and Freddy Krueger (😈)
 - **Player Controls**: Smooth movement using Arrow Keys or WASD
-- **Scoring System**: Earn 100 points for each character you find
-- **Time Challenge**: 3-minute countdown timer to find all characters
+- **Scoring System**: 
+  - Earn 100 points for each regular character
+  - Santa awards a massive 10,000,000,000 points!
+- **Time Challenge**: 
+  - Elf Find Mode: 59-second countdown
+  - Horror Modes: 3-minute countdown
 
 ## How to Play
 
 1. Enter your player name
-2. Select your preferred game mode (Realistic, Animated, or Normal/Scary)
+2. Select your preferred game mode (Elf Find, Realistic, Animated, or Normal/Scary)
 3. Click "Start Game"
 4. Use **Arrow Keys** or **WASD** to move your player around the house
-5. Find all three horror characters before time runs out
+5. Find all characters before time runs out
 6. Win by finding all characters or lose when the timer reaches zero!
 
 ## Tech Stack
@@ -76,6 +83,12 @@ Or connect your GitHub repository to Vercel for automatic deployments.
 - **D** or **→**: Move right
 
 ## Screenshots
+
+### Elf Find Mode Menu
+![Elf Find Menu](https://github.com/user-attachments/assets/9f52a3a7-0b8f-4d25-8563-a156da4ce04b)
+
+### Elf Find Mode Gameplay
+![Elf Find Gameplay](https://github.com/user-attachments/assets/88898c5b-f78c-4281-8f45-56ea7c579310)
 
 ### Main Menu
 ![Menu](https://github.com/user-attachments/assets/e195d813-ee0d-41ae-9877-6a85697798f0)

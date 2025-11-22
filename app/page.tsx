@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 
-type GameMode = 'realistic' | 'animated' | 'normal'
+type GameMode = 'realistic' | 'animated' | 'normal' | 'elf-find'
 
 interface HorrorCharacter {
   id: string
@@ -11,6 +11,7 @@ interface HorrorCharacter {
   x: number
   y: number
   found: boolean
+  points?: number
 }
 
 interface Room {
@@ -21,20 +22,30 @@ interface Room {
   type: string
 }
 
-const HORROR_CHARACTERS = [
-  { id: '1', name: 'Pennywise', emoji: '🤡' },
-  { id: '2', name: 'Michael Myers', emoji: '🔪' },
-  { id: '3', name: 'Freddy Krueger', emoji: '😈' },
-]
-
 // Game constants
 const GAME_DURATION_SECONDS = 180
+const ELF_GAME_DURATION_SECONDS = 59
 const PLAYER_SPEED = 10
 const COLLISION_THRESHOLD = 30
 const PLAYER_MIN_X = 20
 const PLAYER_MAX_X = 780
 const PLAYER_MIN_Y = 20
 const PLAYER_MAX_Y = 550
+const SANTA_POINTS = 10000000000
+const DEFAULT_CHARACTER_POINTS = 100
+
+const HORROR_CHARACTERS = [
+  { id: '1', name: 'Pennywise', emoji: '🤡' },
+  { id: '2', name: 'Michael Myers', emoji: '🔪' },
+  { id: '3', name: 'Freddy Krueger', emoji: '😈' },
+]
+
+const ELF_CHARACTERS = [
+  { id: '1', name: 'Elf Helper', emoji: '🧝' },
+  { id: '2', name: 'Elf Worker', emoji: '🧝‍♀️' },
+  { id: '3', name: 'Elf Builder', emoji: '🧝‍♂️' },
+  { id: '4', name: 'Santa Claus', emoji: '🎅', points: SANTA_POINTS },
+]
 
 export default function Home() {
   const [playerName, setPlayerName] = useState('')
@@ -67,21 +78,23 @@ export default function Home() {
 
   // Place horror characters randomly
   const placeCharacters = useCallback(() => {
-    const newCharacters = HORROR_CHARACTERS.map(char => ({
+    const characterSet = gameMode === 'elf-find' ? ELF_CHARACTERS : HORROR_CHARACTERS
+    const newCharacters = characterSet.map(char => ({
       ...char,
       x: Math.random() * 700 + 50,
       y: Math.random() * 500 + 50,
       found: false
     }))
     setCharacters(newCharacters)
-  }, [])
+  }, [gameMode])
 
   // Start game
   const startGame = () => {
     if (playerName.trim()) {
       setGameStarted(true)
       setScore(0)
-      setTimeLeft(GAME_DURATION_SECONDS)
+      const duration = gameMode === 'elf-find' ? ELF_GAME_DURATION_SECONDS : GAME_DURATION_SECONDS
+      setTimeLeft(duration)
       setGameOver(false)
       generateHouse()
       placeCharacters()
@@ -149,7 +162,9 @@ export default function Home() {
             updated[index].found = true
             return updated
           })
-          setScore(prev => prev + 100)
+          // Award points - Santa gives 10 billion, others give 100
+          const points = char.points || DEFAULT_CHARACTER_POINTS
+          setScore(prev => prev + points)
         }
       }
     })
@@ -184,20 +199,28 @@ export default function Home() {
           player: '💀',
           scary: 'opacity-100 animate-pulse'
         }
+      case 'elf-find':
+        return {
+          bg: 'bg-gradient-to-br from-green-600 via-red-600 to-green-700',
+          text: 'text-white',
+          player: '🎄',
+          scary: 'opacity-100 animate-bounce'
+        }
     }
   }
 
   const style = getModeStyle()
 
   if (!gameStarted) {
+    const isElfMode = gameMode === 'elf-find'
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-red-900 flex items-center justify-center p-4">
-        <div className="bg-black bg-opacity-80 p-8 rounded-2xl shadow-2xl max-w-md w-full border-2 border-red-600">
-          <h1 className="text-5xl font-bold text-center mb-2 text-red-500" style={{ textShadow: '0 0 10px #ff0000' }}>
-            👻 Horror Finder 👻
+      <div className={`min-h-screen ${isElfMode ? 'bg-gradient-to-br from-green-800 via-red-900 to-green-900' : 'bg-gradient-to-br from-purple-900 via-black to-red-900'} flex items-center justify-center p-4`}>
+        <div className={`bg-black bg-opacity-80 p-8 rounded-2xl shadow-2xl max-w-md w-full border-2 ${isElfMode ? 'border-green-500' : 'border-red-600'}`}>
+          <h1 className={`text-5xl font-bold text-center mb-2 ${isElfMode ? 'text-green-400' : 'text-red-500'}`} style={{ textShadow: isElfMode ? '0 0 10px #22c55e' : '0 0 10px #ff0000' }}>
+            {isElfMode ? '🎄 Elf Finder 🎅' : '👻 Horror Finder 👻'}
           </h1>
           <p className="text-center text-gray-300 mb-6 text-sm">
-            Find all the horror characters before time runs out!
+            {isElfMode ? 'Find all the elves and Santa before time runs out!' : 'Find all the horror characters before time runs out!'}
           </p>
           
           <div className="mb-6">
@@ -215,6 +238,16 @@ export default function Home() {
           <div className="mb-6">
             <label className="block text-white mb-2 font-semibold">Select Game Mode:</label>
             <div className="space-y-2">
+              <button
+                onClick={() => setGameMode('elf-find')}
+                className={`w-full px-4 py-3 rounded-lg font-semibold transition-all ${
+                  gameMode === 'elf-find'
+                    ? 'bg-green-600 text-white border-2 border-white'
+                    : 'bg-green-700 text-gray-300 border-2 border-green-600 hover:bg-green-600'
+                }`}
+              >
+                🎅 Elf Find Mode (59 seconds!)
+              </button>
               <button
                 onClick={() => setGameMode('realistic')}
                 className={`w-full px-4 py-3 rounded-lg font-semibold transition-all ${
@@ -258,7 +291,10 @@ export default function Home() {
 
           <div className="mt-6 text-center text-gray-400 text-sm">
             <p className="mb-2">🎮 Use Arrow Keys or WASD to move</p>
-            <p>Find: {HORROR_CHARACTERS.map(c => c.emoji + ' ' + c.name).join(', ')}</p>
+            <p>Find: {(gameMode === 'elf-find' ? ELF_CHARACTERS : HORROR_CHARACTERS).map(c => c.emoji + ' ' + c.name).join(', ')}</p>
+            {gameMode === 'elf-find' && (
+              <p className="mt-2 text-yellow-400 font-semibold">⭐ Finding Santa gives 10 billion points! ⭐</p>
+            )}
           </div>
         </div>
       </div>
@@ -282,7 +318,7 @@ export default function Home() {
             </div>
           </div>
           <div className="flex gap-2">
-            {HORROR_CHARACTERS.map((char) => {
+            {(gameMode === 'elf-find' ? ELF_CHARACTERS : HORROR_CHARACTERS).map((char) => {
               const found = characters.find(c => c.id === char.id)?.found
               return (
                 <div
@@ -375,7 +411,7 @@ export default function Home() {
         {/* Controls Info */}
         <div className="bg-black bg-opacity-70 rounded-lg p-3 mt-4 text-center">
           <p className={`text-sm ${style.text}`}>
-            🎮 Use Arrow Keys or WASD to move • Find all horror characters to win!
+            🎮 Use Arrow Keys or WASD to move • Find all {gameMode === 'elf-find' ? 'elves and Santa' : 'horror characters'} to win!
           </p>
         </div>
       </div>
