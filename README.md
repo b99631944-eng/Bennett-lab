@@ -1,16 +1,19 @@
 # Horror & Elf Finder Game 👻🎄
 
-A thrilling browser-based game where players navigate through randomly generated houses to find horror characters or festive elves before time runs out!
+A thrilling browser-based game collection featuring multiple game modes including horror character finding, elf hunting, and a challenging jumpscare obstacle course!
 
 ## Features
 
-- **Four Game Modes**:
+- **Five Game Modes**:
+  - 😱 **Jumpscare Obby (NEW!)**: Navigate across floating platforms in a spooky obstacle course! Fall off and get a terrifying jumpscare! Complete the course to earn 100 points. 2-minute time limit.
   - 🎅 **Elf Find Mode**: Festive Christmas theme where you find 3 elves and Santa in 59 seconds! Santa is worth 10 billion points!
   - 🏚️ **Realistic Mode**: Dark, atmospheric visuals for a serious horror experience
   - 🎨 **Animated Mode**: Colorful, friendly appearance for a lighter experience
   - 💀 **Normal Mode (Scary)**: Red and black theme with pulsing effects - the scariest mode!
 
-- **Random House Generation**: Each playthrough generates a unique house layout with 6-10 randomly placed rooms
+- **Random Level Generation**: 
+  - House modes generate unique layouts with 6-10 randomly placed rooms
+  - Obby mode creates challenging platform courses with 8-10 platforms
 - **Multiple Character Sets**: 
   - **Elf Mode**: Find Elf Helper (🧝), Elf Worker (🧝‍♀️), Elf Builder (🧝‍♂️), and Santa Claus (🎅)
   - **Horror Mode**: Find Pennywise (🤡), Michael Myers (🔪), and Freddy Krueger (😈)
@@ -18,18 +21,20 @@ A thrilling browser-based game where players navigate through randomly generated
 - **Scoring System**: 
   - Earn 100 points for each regular character
   - Santa awards a massive 10,000,000,000 points!
+  - Complete the obby course for 100 points!
 - **Time Challenge**: 
+  - Jumpscare Obby: 2-minute countdown
   - Elf Find Mode: 59-second countdown
   - Horror Modes: 3-minute countdown
 
 ## How to Play
 
 1. Enter your player name
-2. Select your preferred game mode (Elf Find, Realistic, Animated, or Normal/Scary)
+2. Select your preferred game mode (Jumpscare Obby, Elf Find, Realistic, Animated, or Normal/Scary)
 3. Click "Start Game"
-4. Use **Arrow Keys** or **WASD** to move your player around the house
-5. Find all characters before time runs out
-6. Win by finding all characters or lose when the timer reaches zero!
+4. **For House Modes**: Use **Arrow Keys** or **WASD** to move your player around the house and find all characters
+5. **For Obby Mode**: Navigate across platforms without falling! Reach the green finish platform to win!
+6. Win by completing your objective before time runs out!
 
 ## Tech Stack
 

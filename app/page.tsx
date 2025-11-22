@@ -43,6 +43,10 @@ const PLAYER_MAX_Y = 550
 const SANTA_POINTS = 10000000000
 const DEFAULT_CHARACTER_POINTS = 100
 const OBBY_COMPLETION_POINTS = 100
+const MIN_PLATFORMS = 8
+const PLATFORM_COUNT_RANGE = 3
+const PLAYER_HITBOX_SIZE = 20
+const JUMPSCARE_DURATION_MS = 2000
 
 const HORROR_CHARACTERS = [
   { id: '1', name: 'Pennywise', emoji: '🤡' },
@@ -102,7 +106,7 @@ export default function Home() {
     })
     
     // Generate 8-10 platforms in a challenging path
-    const numPlatforms = 8 + Math.floor(Math.random() * 3)
+    const numPlatforms = MIN_PLATFORMS + Math.floor(Math.random() * PLATFORM_COUNT_RANGE)
     let currentX = 200
     let currentY = 480
     
@@ -145,6 +149,26 @@ export default function Home() {
     }))
     setCharacters(newCharacters)
   }, [gameMode])
+
+  // Helper function to check if player is on a platform
+  const isPlayerOnPlatform = useCallback((playerX: number, playerY: number, platform: Platform) => {
+    const playerRight = playerX + PLAYER_HITBOX_SIZE
+    const playerLeft = playerX - PLAYER_HITBOX_SIZE
+    const playerBottom = playerY + PLAYER_HITBOX_SIZE
+    const playerTop = playerY - PLAYER_HITBOX_SIZE
+    
+    const platformRight = platform.x + platform.width
+    const platformLeft = platform.x
+    const platformBottom = platform.y + platform.height
+    const platformTop = platform.y
+    
+    return (
+      playerRight > platformLeft &&
+      playerLeft < platformRight &&
+      playerBottom > platformTop &&
+      playerTop < platformBottom
+    )
+  }, [])
 
   // Start game
   const startGame = () => {
@@ -250,64 +274,28 @@ export default function Home() {
     if (!gameStarted || gameOver || gameMode !== 'obby' || showJumpscare) return
 
     // Check if player is on a platform
-    const onPlatform = platforms.some(platform => {
-      const playerRight = playerX + 20
-      const playerLeft = playerX - 20
-      const playerBottom = playerY + 20
-      const playerTop = playerY - 20
-      
-      const platformRight = platform.x + platform.width
-      const platformLeft = platform.x
-      const platformBottom = platform.y + platform.height
-      const platformTop = platform.y
-      
-      return (
-        playerRight > platformLeft &&
-        playerLeft < platformRight &&
-        playerBottom > platformTop &&
-        playerTop < platformBottom
-      )
-    })
+    const onPlatform = platforms.some(platform => isPlayerOnPlatform(playerX, playerY, platform))
 
     // Check if player reached finish platform
     const finishPlatform = platforms.find(p => p.isFinish)
-    if (finishPlatform) {
-      const playerRight = playerX + 20
-      const playerLeft = playerX - 20
-      const playerBottom = playerY + 20
-      const playerTop = playerY - 20
-      
-      const platformRight = finishPlatform.x + finishPlatform.width
-      const platformLeft = finishPlatform.x
-      const platformBottom = finishPlatform.y + finishPlatform.height
-      const platformTop = finishPlatform.y
-      
-      const onFinish = (
-        playerRight > platformLeft &&
-        playerLeft < platformRight &&
-        playerBottom > platformTop &&
-        playerTop < platformBottom
-      )
-      
-      if (onFinish) {
-        setScore(prev => prev + OBBY_COMPLETION_POINTS)
-        setGameOver(true)
-        return
-      }
+    if (finishPlatform && isPlayerOnPlatform(playerX, playerY, finishPlatform)) {
+      setScore(prev => prev + OBBY_COMPLETION_POINTS)
+      setGameOver(true)
+      return
     }
 
     // If not on any platform, player falls - show jumpscare!
     if (!onPlatform && platforms.length > 0) {
       setShowJumpscare(true)
     }
-  }, [playerX, playerY, platforms, gameStarted, gameOver, gameMode, showJumpscare])
+  }, [playerX, playerY, platforms, gameStarted, gameOver, gameMode, showJumpscare, isPlayerOnPlatform])
 
   // Handle jumpscare timeout
   useEffect(() => {
     if (showJumpscare && gameMode === 'obby' && !gameOver) {
       jumpscareTimeoutRef.current = setTimeout(() => {
         setGameOver(true)
-      }, 2000)
+      }, JUMPSCARE_DURATION_MS)
       
       return () => {
         if (jumpscareTimeoutRef.current) {
