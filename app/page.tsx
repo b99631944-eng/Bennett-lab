@@ -11,6 +11,7 @@ interface HorrorCharacter {
   x: number
   y: number
   found: boolean
+  points?: number
 }
 
 interface Room {
@@ -20,6 +21,18 @@ interface Room {
   height: number
   type: string
 }
+
+// Game constants
+const GAME_DURATION_SECONDS = 180
+const ELF_GAME_DURATION_SECONDS = 59
+const PLAYER_SPEED = 10
+const COLLISION_THRESHOLD = 30
+const PLAYER_MIN_X = 20
+const PLAYER_MAX_X = 780
+const PLAYER_MIN_Y = 20
+const PLAYER_MAX_Y = 550
+const SANTA_POINTS = 10000000000
+const DEFAULT_CHARACTER_POINTS = 100
 
 const HORROR_CHARACTERS = [
   { id: '1', name: 'Pennywise', emoji: '🤡' },
@@ -31,18 +44,8 @@ const ELF_CHARACTERS = [
   { id: '1', name: 'Elf Helper', emoji: '🧝' },
   { id: '2', name: 'Elf Worker', emoji: '🧝‍♀️' },
   { id: '3', name: 'Elf Builder', emoji: '🧝‍♂️' },
-  { id: '4', name: 'Santa Claus', emoji: '🎅', points: 10000000000 },
+  { id: '4', name: 'Santa Claus', emoji: '🎅', points: SANTA_POINTS },
 ]
-
-// Game constants
-const GAME_DURATION_SECONDS = 180
-const ELF_GAME_DURATION_SECONDS = 59
-const PLAYER_SPEED = 10
-const COLLISION_THRESHOLD = 30
-const PLAYER_MIN_X = 20
-const PLAYER_MAX_X = 780
-const PLAYER_MIN_Y = 20
-const PLAYER_MAX_Y = 550
 
 export default function Home() {
   const [playerName, setPlayerName] = useState('')
@@ -160,7 +163,7 @@ export default function Home() {
             return updated
           })
           // Award points - Santa gives 10 billion, others give 100
-          const points = (char as any).points || 100
+          const points = char.points || DEFAULT_CHARACTER_POINTS
           setScore(prev => prev + points)
         }
       }
