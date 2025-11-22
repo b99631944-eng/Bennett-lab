@@ -68,6 +68,10 @@ export class PermissionHandler {
       return false;
     }
 
+    if (this.state === PermissionState.GRANTED) {
+      return true;
+    }
+
     this.setState(PermissionState.REQUESTING);
 
     try {

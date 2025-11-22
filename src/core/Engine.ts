@@ -191,11 +191,6 @@ export class Engine {
   private update(delta: number, elapsed: number): void {
     // Update ECS systems
     this.world.update(delta, elapsed);
-
-    // Update debug UI
-    if (this.debugPane) {
-      this.updateDebugUI();
-    }
   }
 
   /**
@@ -229,13 +224,6 @@ export class Engine {
     pane.addBinding(stats, 'camX', { readonly: true, label: 'Camera X' });
     pane.addBinding(stats, 'camY', { readonly: true, label: 'Camera Y' });
     pane.addBinding(stats, 'camZ', { readonly: true, label: 'Camera Z' });
-  }
-
-  /**
-   * Updates debug UI values
-   */
-  private updateDebugUI(): void {
-    // Debug UI updates are handled automatically
   }
 
   /**

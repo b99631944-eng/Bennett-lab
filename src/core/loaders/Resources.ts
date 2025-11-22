@@ -302,8 +302,8 @@ export class Resources extends Observer {
       this.loadingOverlay.style.opacity = '0';
 
       setTimeout(() => {
-        if (this.loadingOverlay && this.loadingOverlay.parentElement) {
-          this.loadingOverlay.parentElement.removeChild(this.loadingOverlay);
+        if (this.loadingOverlay) {
+          this.loadingOverlay.remove();
         }
         this.loadingOverlay = null;
       }, 500);

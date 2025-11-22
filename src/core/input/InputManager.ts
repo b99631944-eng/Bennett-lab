@@ -39,6 +39,14 @@ export class InputManager extends Observer {
   private raycaster: THREE.Raycaster;
   private camera: THREE.Camera;
 
+  // Bound event handlers
+  private boundTouchStart: (e: TouchEvent) => void;
+  private boundTouchMove: (e: TouchEvent) => void;
+  private boundTouchEnd: (e: TouchEvent) => void;
+  private boundTouchCancel: (e: TouchEvent) => void;
+  private boundClick: (e: MouseEvent) => void;
+  private boundDeviceOrientation: (e: DeviceOrientationEvent) => void;
+
   // Configuration
   private readonly SWIPE_THRESHOLD = 50; // pixels
   private readonly TAP_TIME_THRESHOLD = 200; // milliseconds
@@ -55,6 +63,14 @@ export class InputManager extends Observer {
     this.deviceOrientationEnabled = false;
     this.raycaster = new THREE.Raycaster();
 
+    // Bind event handlers once
+    this.boundTouchStart = this.onTouchStart.bind(this);
+    this.boundTouchMove = this.onTouchMove.bind(this);
+    this.boundTouchEnd = this.onTouchEnd.bind(this);
+    this.boundTouchCancel = this.onTouchCancel.bind(this);
+    this.boundClick = this.onClick.bind(this);
+    this.boundDeviceOrientation = this.onDeviceOrientation.bind(this);
+
     this.setupEventListeners();
   }
 
@@ -63,13 +79,13 @@ export class InputManager extends Observer {
    */
   private setupEventListeners(): void {
     // Touch events
-    this.canvas.addEventListener('touchstart', this.onTouchStart.bind(this), { passive: false });
-    this.canvas.addEventListener('touchmove', this.onTouchMove.bind(this), { passive: false });
-    this.canvas.addEventListener('touchend', this.onTouchEnd.bind(this), { passive: false });
-    this.canvas.addEventListener('touchcancel', this.onTouchCancel.bind(this), { passive: false });
+    this.canvas.addEventListener('touchstart', this.boundTouchStart, { passive: false });
+    this.canvas.addEventListener('touchmove', this.boundTouchMove, { passive: false });
+    this.canvas.addEventListener('touchend', this.boundTouchEnd, { passive: false });
+    this.canvas.addEventListener('touchcancel', this.boundTouchCancel, { passive: false });
 
     // Mouse events (for desktop testing)
-    this.canvas.addEventListener('click', this.onClick.bind(this));
+    this.canvas.addEventListener('click', this.boundClick);
   }
 
   /**
@@ -256,7 +272,7 @@ export class InputManager extends Observer {
       }
     }
 
-    window.addEventListener('deviceorientation', this.onDeviceOrientation.bind(this));
+    window.addEventListener('deviceorientation', this.boundDeviceOrientation);
     this.deviceOrientationEnabled = true;
     console.log('📱 Device orientation enabled');
     return true;
@@ -309,14 +325,14 @@ export class InputManager extends Observer {
    * Cleans up event listeners
    */
   public dispose(): void {
-    this.canvas.removeEventListener('touchstart', this.onTouchStart.bind(this));
-    this.canvas.removeEventListener('touchmove', this.onTouchMove.bind(this));
-    this.canvas.removeEventListener('touchend', this.onTouchEnd.bind(this));
-    this.canvas.removeEventListener('touchcancel', this.onTouchCancel.bind(this));
-    this.canvas.removeEventListener('click', this.onClick.bind(this));
+    this.canvas.removeEventListener('touchstart', this.boundTouchStart);
+    this.canvas.removeEventListener('touchmove', this.boundTouchMove);
+    this.canvas.removeEventListener('touchend', this.boundTouchEnd);
+    this.canvas.removeEventListener('touchcancel', this.boundTouchCancel);
+    this.canvas.removeEventListener('click', this.boundClick);
 
     if (this.deviceOrientationEnabled) {
-      window.removeEventListener('deviceorientation', this.onDeviceOrientation.bind(this));
+      window.removeEventListener('deviceorientation', this.boundDeviceOrientation);
     }
 
     this.clear();
