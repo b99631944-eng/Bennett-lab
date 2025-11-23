@@ -157,7 +157,6 @@ export default function Home() {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
       }
-      setAvailableNames(shuffled)
       const picked = shuffled[0]
       setSecretSantaAssignment(picked)
       setPickedNames([picked])
@@ -455,7 +454,11 @@ export default function Home() {
             {titleText}
           </h1>
           <p className="text-center text-gray-300 mb-6 text-sm">
-            {isSecretSanta ? 'Pick a name from the bucket to find out who you\'ll give a gift to!' : isElfMode ? 'Find all the elves and Santa before time runs out!' : 'Find all the horror characters before time runs out!'}
+            {isSecretSanta 
+              ? 'Pick a name from the bucket to find out who you\'ll give a gift to!' 
+              : isElfMode 
+                ? 'Find all the elves and Santa before time runs out!' 
+                : 'Find all the horror characters before time runs out!'}
           </p>
           
           <div className="mb-6">
@@ -637,7 +640,7 @@ export default function Home() {
                     Pick from the bucket!
                   </p>
                   <div className="text-lg text-gray-300 mb-4">
-                    <p>Names in bucket: {availableNames.length > 0 ? availableNames.length : (pickedNames.length > 0 ? 0 : SECRET_SANTA_PARTICIPANTS.length)}</p>
+                    <p>Names in bucket: {availableNames.length || (pickedNames.length === 0 ? SECRET_SANTA_PARTICIPANTS.length : 0)}</p>
                     {pickedNames.length > 0 && (
                       <p className="mt-2">Already picked: {pickedNames.length}</p>
                     )}
