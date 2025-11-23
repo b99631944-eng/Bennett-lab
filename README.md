@@ -1,23 +1,32 @@
 # Horror & Elf Finder Game 👻🎄
 
-A thrilling browser-based game collection featuring multiple game modes including horror character finding, elf hunting, and a challenging jumpscare obstacle course!
+A thrilling browser-based game collection featuring multiple game modes including horror character finding, elf hunting, a challenging jumpscare obstacle course, and a Secret Santa picker!
 
 ## Features
 
-- **Five Game Modes**:
-  - 😱 **Jumpscare Obby (NEW!)**: Navigate across floating platforms in a spooky obstacle course! Fall off and get a terrifying jumpscare! Complete the course to earn 100 points. 2-minute time limit.
+- **Six Game Modes**:
+  - 🎁 **Secret Santa Picker (NEW!)**: Organize your Secret Santa gift exchange! Pick names from a virtual bucket with 11 participants. Perfect for holiday parties!
+  - 😱 **Jumpscare Obby**: Navigate across floating platforms in a spooky obstacle course! Fall off and get a terrifying jumpscare! Complete the course to earn 100 points. 2-minute time limit.
   - 🎅 **Elf Find Mode**: Festive Christmas theme where you find 3 elves and Santa in 59 seconds! Santa is worth 10 billion points!
   - 🏚️ **Realistic Mode**: Dark, atmospheric visuals for a serious horror experience
   - 🎨 **Animated Mode**: Colorful, friendly appearance for a lighter experience
   - 💀 **Normal Mode (Scary)**: Red and black theme with pulsing effects - the scariest mode!
 
+- **Secret Santa Features**:
+  - 🎁 Interactive virtual bucket with 11 participants
+  - 👥 Participants: Bennett, Hendrix, Isaac, Vince, Daniel, Addie, Owen, Evie, Simon, Hannah, Marina
+  - 🎲 Randomized name shuffling for fair selection
+  - 📊 Progress tracking (names picked vs remaining)
+  - 🔄 Multi-user support - pass around to let everyone pick
+  - ♻️ Reset bucket option when all names are drawn
+  
 - **Random Level Generation**: 
   - House modes generate unique layouts with 6-10 randomly placed rooms
   - Obby mode creates challenging platform courses with 8-10 platforms
 - **Multiple Character Sets**: 
   - **Elf Mode**: Find Elf Helper (🧝), Elf Worker (🧝‍♀️), Elf Builder (🧝‍♂️), and Santa Claus (🎅)
   - **Horror Mode**: Find Pennywise (🤡), Michael Myers (🔪), and Freddy Krueger (😈)
-- **Player Controls**: Smooth movement using Arrow Keys or WASD
+- **Player Controls**: Smooth movement using Arrow Keys or WASD (for game modes)
 - **Scoring System**: 
   - Earn 100 points for each regular character
   - Santa awards a massive 10,000,000,000 points!
@@ -26,15 +35,17 @@ A thrilling browser-based game collection featuring multiple game modes includin
   - Jumpscare Obby: 2-minute countdown
   - Elf Find Mode: 59-second countdown
   - Horror Modes: 3-minute countdown
+  - Secret Santa: No time limit - take your time!
 
 ## How to Play
 
 1. Enter your player name
-2. Select your preferred game mode (Jumpscare Obby, Elf Find, Realistic, Animated, or Normal/Scary)
+2. Select your preferred game mode (Secret Santa Picker, Jumpscare Obby, Elf Find, Realistic, Animated, or Normal/Scary)
 3. Click "Start Game"
-4. **For House Modes**: Use **Arrow Keys** or **WASD** to move your player around the house and find all characters
-5. **For Obby Mode**: Navigate across platforms without falling! Reach the green finish platform to win!
-6. Win by completing your objective before time runs out!
+4. **For Secret Santa Mode**: Click "Pick a Name!" to randomly draw from the bucket. Share the results with participants, then click "Let someone else pick" for the next person!
+5. **For House Modes**: Use **Arrow Keys** or **WASD** to move your player around the house and find all characters
+6. **For Obby Mode**: Navigate across platforms without falling! Reach the green finish platform to win!
+7. Win by completing your objective before time runs out! (Not applicable to Secret Santa mode)
 
 ## Tech Stack
 
