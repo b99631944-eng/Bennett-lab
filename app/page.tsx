@@ -350,6 +350,7 @@ export default function Home() {
         }
       }
     }
+    return undefined
   }, [showJumpscare, gameMode, gameOver])
 
   // Cleanup timeout on unmount
