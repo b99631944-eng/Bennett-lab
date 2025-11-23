@@ -548,7 +548,7 @@ export default function Home() {
             {gameMode === 'secret-santa' ? (
               <>
                 <p className="mb-2">🎁 Pick a name from the bucket!</p>
-                <p>Participants: Bennett, Hendrix, Isaac, Vince, Daniel, Addie, Owen, Evie, Simon, Hannah, Marina</p>
+                <p>Participants: {SECRET_SANTA_PARTICIPANTS.join(', ')}</p>
               </>
             ) : (
               <>
@@ -637,7 +637,7 @@ export default function Home() {
                     Pick from the bucket!
                   </p>
                   <div className="text-lg text-gray-300 mb-4">
-                    <p>Names in bucket: {availableNames.length > 0 ? availableNames.length : SECRET_SANTA_PARTICIPANTS.length}</p>
+                    <p>Names in bucket: {availableNames.length > 0 ? availableNames.length : (pickedNames.length > 0 ? 0 : SECRET_SANTA_PARTICIPANTS.length)}</p>
                     {pickedNames.length > 0 && (
                       <p className="mt-2">Already picked: {pickedNames.length}</p>
                     )}
