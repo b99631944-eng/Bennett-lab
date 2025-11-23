@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
-type GameMode = 'realistic' | 'animated' | 'normal'
+type GameMode = 'realistic' | 'animated' | 'normal' | 'elf-find' | 'obby'
 
 interface HorrorCharacter {
   id: string
@@ -11,6 +11,7 @@ interface HorrorCharacter {
   x: number
   y: number
   found: boolean
+  points?: number
 }
 
 interface Room {
@@ -21,20 +22,44 @@ interface Room {
   type: string
 }
 
-const HORROR_CHARACTERS = [
-  { id: '1', name: 'Pennywise', emoji: '🤡' },
-  { id: '2', name: 'Michael Myers', emoji: '🔪' },
-  { id: '3', name: 'Freddy Krueger', emoji: '😈' },
-]
+interface Platform {
+  x: number
+  y: number
+  width: number
+  height: number
+  isFinish?: boolean
+}
 
 // Game constants
 const GAME_DURATION_SECONDS = 180
+const ELF_GAME_DURATION_SECONDS = 59
+const OBBY_GAME_DURATION_SECONDS = 120
 const PLAYER_SPEED = 10
 const COLLISION_THRESHOLD = 30
 const PLAYER_MIN_X = 20
 const PLAYER_MAX_X = 780
 const PLAYER_MIN_Y = 20
 const PLAYER_MAX_Y = 550
+const SANTA_POINTS = 10000000000
+const DEFAULT_CHARACTER_POINTS = 100
+const OBBY_COMPLETION_POINTS = 100
+const MIN_PLATFORMS = 8
+const PLATFORM_COUNT_RANGE = 3
+const PLAYER_HITBOX_SIZE = 20
+const JUMPSCARE_DURATION_MS = 2000
+
+const HORROR_CHARACTERS = [
+  { id: '1', name: 'Pennywise', emoji: '🤡' },
+  { id: '2', name: 'Michael Myers', emoji: '🔪' },
+  { id: '3', name: 'Freddy Krueger', emoji: '😈' },
+]
+
+const ELF_CHARACTERS = [
+  { id: '1', name: 'Elf Helper', emoji: '🧝' },
+  { id: '2', name: 'Elf Worker', emoji: '🧝‍♀️' },
+  { id: '3', name: 'Elf Builder', emoji: '🧝‍♂️' },
+  { id: '4', name: 'Santa Claus', emoji: '🎅', points: SANTA_POINTS },
+]
 
 export default function Home() {
   const [playerName, setPlayerName] = useState('')
@@ -44,9 +69,12 @@ export default function Home() {
   const [playerY, setPlayerY] = useState(50)
   const [characters, setCharacters] = useState<HorrorCharacter[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
+  const [platforms, setPlatforms] = useState<Platform[]>([])
+  const [showJumpscare, setShowJumpscare] = useState(false)
   const [score, setScore] = useState(0)
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION_SECONDS)
   const [gameOver, setGameOver] = useState(false)
+  const jumpscareTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Generate random house layout
   const generateHouse = useCallback(() => {
@@ -65,15 +93,81 @@ export default function Home() {
     setRooms(newRooms)
   }, [])
 
+  // Generate obstacle course for obby mode
+  const generateObby = useCallback(() => {
+    const newPlatforms: Platform[] = []
+    
+    // Starting platform
+    newPlatforms.push({
+      x: 50,
+      y: 500,
+      width: 120,
+      height: 30
+    })
+    
+    // Generate 8-10 platforms in a challenging path
+    const numPlatforms = MIN_PLATFORMS + Math.floor(Math.random() * PLATFORM_COUNT_RANGE)
+    let currentX = 200
+    let currentY = 480
+    
+    for (let i = 0; i < numPlatforms; i++) {
+      // Vary the position to create jumps
+      currentX += 60 + Math.random() * 80
+      currentY = 200 + Math.random() * 300
+      
+      const platformWidth = 60 + Math.random() * 60
+      const platformHeight = 20 + Math.random() * 15
+      
+      newPlatforms.push({
+        x: currentX,
+        y: currentY,
+        width: platformWidth,
+        height: platformHeight
+      })
+    }
+    
+    // Final platform (finish line)
+    newPlatforms.push({
+      x: currentX + 120,
+      y: currentY,
+      width: 100,
+      height: 40,
+      isFinish: true
+    })
+    
+    setPlatforms(newPlatforms)
+  }, [])
+
   // Place horror characters randomly
   const placeCharacters = useCallback(() => {
-    const newCharacters = HORROR_CHARACTERS.map(char => ({
+    const characterSet = gameMode === 'elf-find' ? ELF_CHARACTERS : HORROR_CHARACTERS
+    const newCharacters = characterSet.map(char => ({
       ...char,
       x: Math.random() * 700 + 50,
       y: Math.random() * 500 + 50,
       found: false
     }))
     setCharacters(newCharacters)
+  }, [gameMode])
+
+  // Helper function to check if player is on a platform
+  const isPlayerOnPlatform = useCallback((playerX: number, playerY: number, platform: Platform) => {
+    const playerRight = playerX + PLAYER_HITBOX_SIZE
+    const playerLeft = playerX - PLAYER_HITBOX_SIZE
+    const playerBottom = playerY + PLAYER_HITBOX_SIZE
+    const playerTop = playerY - PLAYER_HITBOX_SIZE
+    
+    const platformRight = platform.x + platform.width
+    const platformLeft = platform.x
+    const platformBottom = platform.y + platform.height
+    const platformTop = platform.y
+    
+    return (
+      playerRight > platformLeft &&
+      playerLeft < platformRight &&
+      playerBottom > platformTop &&
+      playerTop < platformBottom
+    )
   }, [])
 
   // Start game
@@ -81,10 +175,23 @@ export default function Home() {
     if (playerName.trim()) {
       setGameStarted(true)
       setScore(0)
-      setTimeLeft(GAME_DURATION_SECONDS)
+      setShowJumpscare(false)
+      const duration = gameMode === 'elf-find' ? ELF_GAME_DURATION_SECONDS : 
+                       gameMode === 'obby' ? OBBY_GAME_DURATION_SECONDS : 
+                       GAME_DURATION_SECONDS
+      setTimeLeft(duration)
       setGameOver(false)
-      generateHouse()
-      placeCharacters()
+      
+      if (gameMode === 'obby') {
+        generateObby()
+        setPlayerX(100)
+        setPlayerY(500)
+      } else {
+        generateHouse()
+        placeCharacters()
+        setPlayerX(50)
+        setPlayerY(50)
+      }
     }
   }
 
@@ -149,7 +256,9 @@ export default function Home() {
             updated[index].found = true
             return updated
           })
-          setScore(prev => prev + 100)
+          // Award points - Santa gives 10 billion, others give 100
+          const points = char.points || DEFAULT_CHARACTER_POINTS
+          setScore(prev => prev + points)
         }
       }
     })
@@ -159,6 +268,51 @@ export default function Home() {
       setGameOver(true)
     }
   }, [playerX, playerY, characters, gameStarted, gameOver])
+
+  // Obby mode: Check platform collision and finish line
+  useEffect(() => {
+    if (!gameStarted || gameOver || gameMode !== 'obby' || showJumpscare) return
+
+    // Check if player is on a platform
+    const onPlatform = platforms.some(platform => isPlayerOnPlatform(playerX, playerY, platform))
+
+    // Check if player reached finish platform
+    const finishPlatform = platforms.find(p => p.isFinish)
+    if (finishPlatform && isPlayerOnPlatform(playerX, playerY, finishPlatform)) {
+      setScore(prev => prev + OBBY_COMPLETION_POINTS)
+      setGameOver(true)
+      return
+    }
+
+    // If not on any platform, player falls - show jumpscare!
+    if (!onPlatform && platforms.length > 0) {
+      setShowJumpscare(true)
+    }
+  }, [playerX, playerY, platforms, gameStarted, gameOver, gameMode, showJumpscare, isPlayerOnPlatform])
+
+  // Handle jumpscare timeout
+  useEffect(() => {
+    if (showJumpscare && gameMode === 'obby' && !gameOver) {
+      jumpscareTimeoutRef.current = setTimeout(() => {
+        setGameOver(true)
+      }, JUMPSCARE_DURATION_MS)
+      
+      return () => {
+        if (jumpscareTimeoutRef.current) {
+          clearTimeout(jumpscareTimeoutRef.current)
+        }
+      }
+    }
+  }, [showJumpscare, gameMode, gameOver])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (jumpscareTimeoutRef.current) {
+        clearTimeout(jumpscareTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Get mode-specific styling
   const getModeStyle = () => {
@@ -184,20 +338,35 @@ export default function Home() {
           player: '💀',
           scary: 'opacity-100 animate-pulse'
         }
+      case 'elf-find':
+        return {
+          bg: 'bg-gradient-to-br from-green-600 via-red-600 to-green-700',
+          text: 'text-white',
+          player: '🎄',
+          scary: 'opacity-100 animate-bounce'
+        }
+      case 'obby':
+        return {
+          bg: 'bg-gradient-to-br from-purple-900 via-black to-red-900',
+          text: 'text-purple-100',
+          player: '🏃',
+          scary: 'opacity-100'
+        }
     }
   }
 
   const style = getModeStyle()
 
   if (!gameStarted) {
+    const isElfMode = gameMode === 'elf-find'
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-red-900 flex items-center justify-center p-4">
-        <div className="bg-black bg-opacity-80 p-8 rounded-2xl shadow-2xl max-w-md w-full border-2 border-red-600">
-          <h1 className="text-5xl font-bold text-center mb-2 text-red-500" style={{ textShadow: '0 0 10px #ff0000' }}>
-            👻 Horror Finder 👻
+      <div className={`min-h-screen ${isElfMode ? 'bg-gradient-to-br from-green-800 via-red-900 to-green-900' : 'bg-gradient-to-br from-purple-900 via-black to-red-900'} flex items-center justify-center p-4`}>
+        <div className={`bg-black bg-opacity-80 p-8 rounded-2xl shadow-2xl max-w-md w-full border-2 ${isElfMode ? 'border-green-500' : 'border-red-600'}`}>
+          <h1 className={`text-5xl font-bold text-center mb-2 ${isElfMode ? 'text-green-400' : 'text-red-500'}`} style={{ textShadow: isElfMode ? '0 0 10px #22c55e' : '0 0 10px #ff0000' }}>
+            {isElfMode ? '🎄 Elf Finder 🎅' : '👻 Horror Finder 👻'}
           </h1>
           <p className="text-center text-gray-300 mb-6 text-sm">
-            Find all the horror characters before time runs out!
+            {isElfMode ? 'Find all the elves and Santa before time runs out!' : 'Find all the horror characters before time runs out!'}
           </p>
           
           <div className="mb-6">
@@ -215,6 +384,26 @@ export default function Home() {
           <div className="mb-6">
             <label className="block text-white mb-2 font-semibold">Select Game Mode:</label>
             <div className="space-y-2">
+              <button
+                onClick={() => setGameMode('obby')}
+                className={`w-full px-4 py-3 rounded-lg font-semibold transition-all ${
+                  gameMode === 'obby'
+                    ? 'bg-purple-600 text-white border-2 border-white'
+                    : 'bg-purple-700 text-gray-300 border-2 border-purple-600 hover:bg-purple-600'
+                }`}
+              >
+                😱 Jumpscare Obby (NEW!)
+              </button>
+              <button
+                onClick={() => setGameMode('elf-find')}
+                className={`w-full px-4 py-3 rounded-lg font-semibold transition-all ${
+                  gameMode === 'elf-find'
+                    ? 'bg-green-600 text-white border-2 border-white'
+                    : 'bg-green-700 text-gray-300 border-2 border-green-600 hover:bg-green-600'
+                }`}
+              >
+                🎅 Elf Find Mode (59 seconds!)
+              </button>
               <button
                 onClick={() => setGameMode('realistic')}
                 className={`w-full px-4 py-3 rounded-lg font-semibold transition-all ${
@@ -258,7 +447,16 @@ export default function Home() {
 
           <div className="mt-6 text-center text-gray-400 text-sm">
             <p className="mb-2">🎮 Use Arrow Keys or WASD to move</p>
-            <p>Find: {HORROR_CHARACTERS.map(c => c.emoji + ' ' + c.name).join(', ')}</p>
+            {gameMode === 'obby' ? (
+              <p>Jump across platforms to reach the finish! Fall off and get a jumpscare! 😱</p>
+            ) : (
+              <>
+                <p>Find: {(gameMode === 'elf-find' ? ELF_CHARACTERS : HORROR_CHARACTERS).map(c => c.emoji + ' ' + c.name).join(', ')}</p>
+                {gameMode === 'elf-find' && (
+                  <p className="mt-2 text-yellow-400 font-semibold">⭐ Finding Santa gives 10 billion points! ⭐</p>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -281,26 +479,53 @@ export default function Home() {
               Time: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
             </div>
           </div>
-          <div className="flex gap-2">
-            {HORROR_CHARACTERS.map((char) => {
-              const found = characters.find(c => c.id === char.id)?.found
-              return (
-                <div
-                  key={char.id}
-                  className={`text-2xl ${found ? 'opacity-50 grayscale' : 'opacity-100'}`}
-                  title={char.name}
-                >
-                  {char.emoji}
-                </div>
-              )
-            })}
-          </div>
+          {gameMode !== 'obby' && (
+            <div className="flex gap-2">
+              {(gameMode === 'elf-find' ? ELF_CHARACTERS : HORROR_CHARACTERS).map((char) => {
+                const found = characters.find(c => c.id === char.id)?.found
+                return (
+                  <div
+                    key={char.id}
+                    className={`text-2xl ${found ? 'opacity-50 grayscale' : 'opacity-100'}`}
+                    title={char.name}
+                  >
+                    {char.emoji}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          {gameMode === 'obby' && (
+            <div className={`text-xl font-semibold ${style.text}`}>
+              🏁 Reach the finish to win 100 points!
+            </div>
+          )}
         </div>
 
         {/* Game Area */}
-        <div className="bg-black bg-opacity-50 rounded-lg p-4 relative" style={{ height: '600px' }}>
-          {/* House rooms */}
-          {rooms.map((room, index) => (
+        <div className="bg-black bg-opacity-50 rounded-lg p-4 relative overflow-hidden" style={{ height: '600px' }}>
+          {/* Obby platforms */}
+          {gameMode === 'obby' && platforms.map((platform, index) => (
+            <div
+              key={index}
+              className={`absolute rounded ${platform.isFinish ? 'bg-green-600 border-4 border-yellow-400' : 'bg-purple-700 border-2 border-purple-500'}`}
+              style={{
+                left: `${platform.x}px`,
+                top: `${platform.y}px`,
+                width: `${platform.width}px`,
+                height: `${platform.height}px`,
+              }}
+            >
+              {platform.isFinish && (
+                <div className="flex items-center justify-center h-full text-white font-bold text-lg">
+                  🏁 FINISH
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* House rooms (non-obby modes) */}
+          {gameMode !== 'obby' && rooms.map((room, index) => (
             <div
               key={index}
               className="absolute border-2 border-gray-600 bg-gray-800 bg-opacity-40 rounded flex items-center justify-center"
@@ -315,8 +540,8 @@ export default function Home() {
             </div>
           ))}
 
-          {/* Horror characters */}
-          {characters.map((char) => (
+          {/* Horror characters (non-obby modes) */}
+          {gameMode !== 'obby' && characters.map((char) => (
             !char.found && (
               <div
                 key={char.id}
@@ -344,24 +569,56 @@ export default function Home() {
             {style.player}
           </div>
 
+          {/* Jumpscare Overlay */}
+          {showJumpscare && (
+            <div className="absolute inset-0 bg-red-600 flex items-center justify-center rounded-lg animate-pulse z-50">
+              <div className="text-center">
+                <div className="text-9xl animate-bounce">😱</div>
+                <h2 className="text-6xl font-bold text-white mt-4" style={{ textShadow: '0 0 20px #000' }}>
+                  AAAHHH!!!
+                </h2>
+                <p className="text-3xl text-white mt-2">You fell off!</p>
+              </div>
+            </div>
+          )}
+
           {/* Game Over Overlay */}
-          {gameOver && (
+          {gameOver && !showJumpscare && (
             <div className="absolute inset-0 bg-black bg-opacity-90 flex items-center justify-center rounded-lg">
               <div className="text-center">
-                <h2 className="text-5xl font-bold mb-4 text-red-500">
-                  {characters.every(c => c.found) ? '🎉 You Won! 🎉' : '⏰ Time\'s Up! ⏰'}
-                </h2>
-                <p className="text-2xl text-white mb-2">
-                  Final Score: {score}
-                </p>
-                <p className="text-xl text-gray-300 mb-6">
-                  Found: {characters.filter(c => c.found).length} / {characters.length} characters
-                </p>
+                {gameMode === 'obby' ? (
+                  <>
+                    <h2 className="text-5xl font-bold mb-4 text-green-500">
+                      {score >= OBBY_COMPLETION_POINTS ? '🎉 You Made It! 🎉' : '💀 You Failed! 💀'}
+                    </h2>
+                    <p className="text-2xl text-white mb-2">
+                      Final Score: {score}
+                    </p>
+                    <p className="text-xl text-gray-300 mb-6">
+                      {score >= OBBY_COMPLETION_POINTS 
+                        ? 'You survived the jumpscare obby and earned 100 points!' 
+                        : 'You fell off the platforms. Try again!'}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-5xl font-bold mb-4 text-red-500">
+                      {characters.every(c => c.found) ? '🎉 You Won! 🎉' : '⏰ Time\'s Up! ⏰'}
+                    </h2>
+                    <p className="text-2xl text-white mb-2">
+                      Final Score: {score}
+                    </p>
+                    <p className="text-xl text-gray-300 mb-6">
+                      Found: {characters.filter(c => c.found).length} / {characters.length} characters
+                    </p>
+                  </>
+                )}
                 <button
                   onClick={() => {
                     setGameStarted(false)
                     setPlayerX(50)
                     setPlayerY(50)
+                    setShowJumpscare(false)
                   }}
                   className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg text-xl transition-colors"
                 >
@@ -375,7 +632,9 @@ export default function Home() {
         {/* Controls Info */}
         <div className="bg-black bg-opacity-70 rounded-lg p-3 mt-4 text-center">
           <p className={`text-sm ${style.text}`}>
-            🎮 Use Arrow Keys or WASD to move • Find all horror characters to win!
+            🎮 Use Arrow Keys or WASD to move • {gameMode === 'obby' 
+              ? 'Navigate the platforms without falling!' 
+              : `Find all ${gameMode === 'elf-find' ? 'elves and Santa' : 'horror characters'} to win!`}
           </p>
         </div>
       </div>
