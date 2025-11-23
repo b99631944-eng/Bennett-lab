@@ -157,16 +157,18 @@ export default function Home() {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
       }
-      const picked = shuffled[0]
+      const randomIndex = Math.floor(Math.random() * shuffled.length)
+      const picked = shuffled[randomIndex]
       setSecretSantaAssignment(picked)
       setPickedNames([picked])
-      setAvailableNames(shuffled.slice(1))
+      setAvailableNames(shuffled.filter((_, index) => index !== randomIndex))
     } else {
-      // Pick from remaining names
-      const picked = availableNames[0]
+      // Pick randomly from remaining names
+      const randomIndex = Math.floor(Math.random() * availableNames.length)
+      const picked = availableNames[randomIndex]
       setSecretSantaAssignment(picked)
       setPickedNames([...pickedNames, picked])
-      setAvailableNames(availableNames.slice(1))
+      setAvailableNames(availableNames.filter((_, index) => index !== randomIndex))
     }
   }, [availableNames, pickedNames])
 
@@ -639,12 +641,17 @@ export default function Home() {
                   <p className="text-3xl text-white mb-6">
                     Pick from the bucket!
                   </p>
-                  <div className="text-lg text-gray-300 mb-4">
-                    <p>Names in bucket: {availableNames.length || (pickedNames.length === 0 ? SECRET_SANTA_PARTICIPANTS.length : 0)}</p>
-                    {pickedNames.length > 0 && (
-                      <p className="mt-2">Already picked: {pickedNames.length}</p>
-                    )}
-                  </div>
+                  {(() => {
+                    const namesInBucket = availableNames.length || (pickedNames.length === 0 ? SECRET_SANTA_PARTICIPANTS.length : 0)
+                    return (
+                      <div className="text-lg text-gray-300 mb-4">
+                        <p>Names in bucket: {namesInBucket}</p>
+                        {pickedNames.length > 0 && (
+                          <p className="mt-2">Already picked: {pickedNames.length}</p>
+                        )}
+                      </div>
+                    )
+                  })()}
                   <button
                     onClick={pickSecretSanta}
                     className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-4 px-12 rounded-lg text-2xl transition-all transform hover:scale-105 shadow-lg"
