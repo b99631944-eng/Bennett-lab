@@ -151,17 +151,13 @@ export default function Home() {
   // Pick a Secret Santa name from the bucket
   const pickSecretSanta = useCallback(() => {
     if (availableNames.length === 0) {
-      // Initialize or reset the bucket using Fisher-Yates shuffle
-      const shuffled = [...SECRET_SANTA_PARTICIPANTS]
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-      }
-      const randomIndex = Math.floor(Math.random() * shuffled.length)
-      const picked = shuffled[randomIndex]
+      // Initialize the bucket with all participants
+      const allNames = [...SECRET_SANTA_PARTICIPANTS]
+      const randomIndex = Math.floor(Math.random() * allNames.length)
+      const picked = allNames[randomIndex]
       setSecretSantaAssignment(picked)
       setPickedNames([picked])
-      setAvailableNames(shuffled.filter((_, index) => index !== randomIndex))
+      setAvailableNames(allNames.filter((_, index) => index !== randomIndex))
     } else {
       // Pick randomly from remaining names
       const randomIndex = Math.floor(Math.random() * availableNames.length)
@@ -578,6 +574,9 @@ export default function Home() {
 
   // Secret Santa mode screen
   if (gameMode === 'secret-santa') {
+    // Calculate names in bucket for display
+    const namesInBucket = availableNames.length || (pickedNames.length === 0 ? SECRET_SANTA_PARTICIPANTS.length : 0)
+    
     return (
       <div className={`min-h-screen ${style.bg} flex items-center justify-center p-4`}>
         <div className="max-w-2xl w-full">
@@ -641,17 +640,12 @@ export default function Home() {
                   <p className="text-3xl text-white mb-6">
                     Pick from the bucket!
                   </p>
-                  {(() => {
-                    const namesInBucket = availableNames.length || (pickedNames.length === 0 ? SECRET_SANTA_PARTICIPANTS.length : 0)
-                    return (
-                      <div className="text-lg text-gray-300 mb-4">
-                        <p>Names in bucket: {namesInBucket}</p>
-                        {pickedNames.length > 0 && (
-                          <p className="mt-2">Already picked: {pickedNames.length}</p>
-                        )}
-                      </div>
-                    )
-                  })()}
+                  <div className="text-lg text-gray-300 mb-4">
+                    <p>Names in bucket: {namesInBucket}</p>
+                    {pickedNames.length > 0 && (
+                      <p className="mt-2">Already picked: {pickedNames.length}</p>
+                    )}
+                  </div>
                   <button
                     onClick={pickSecretSanta}
                     className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-4 px-12 rounded-lg text-2xl transition-all transform hover:scale-105 shadow-lg"
