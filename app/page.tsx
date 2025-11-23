@@ -61,6 +61,7 @@ const ELF_CHARACTERS = [
   { id: '4', name: 'Santa Claus', emoji: '🎅', points: SANTA_POINTS },
 ]
 
+// Secret Santa participants list (specific to this group as per requirements)
 const SECRET_SANTA_PARTICIPANTS = [
   'Bennett', 'Hendrix', 'Isaac', 'Vince', 'Daniel', 
   'Addie', 'Owen', 'Evie', 'Simon', 'Hannah', 'Marina'
@@ -574,7 +575,10 @@ export default function Home() {
 
   // Secret Santa mode screen
   if (gameMode === 'secret-santa') {
-    // Calculate names in bucket for display
+    // Calculate names in bucket for display:
+    // - If availableNames has items, show that count
+    // - If no picks yet (fresh bucket), show total participant count
+    // - If bucket is empty (all picked), show 0
     const namesInBucket = availableNames.length || (pickedNames.length === 0 ? SECRET_SANTA_PARTICIPANTS.length : 0)
     
     return (
@@ -610,6 +614,7 @@ export default function Home() {
                     <button
                       onClick={() => setSecretSantaAssignment(null)}
                       className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-xl transition-colors"
+                      title="Clear the current assignment so the next person can pick"
                     >
                       Let someone else pick
                     </button>
