@@ -151,8 +151,12 @@ export default function Home() {
   // Pick a Secret Santa name from the bucket
   const pickSecretSanta = useCallback(() => {
     if (availableNames.length === 0) {
-      // Initialize or reset the bucket
-      const shuffled = [...SECRET_SANTA_PARTICIPANTS].sort(() => Math.random() - 0.5)
+      // Initialize or reset the bucket using Fisher-Yates shuffle
+      const shuffled = [...SECRET_SANTA_PARTICIPANTS]
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+      }
       setAvailableNames(shuffled)
       const picked = shuffled[0]
       setSecretSantaAssignment(picked)
@@ -412,11 +416,43 @@ export default function Home() {
   if (!gameStarted) {
     const isElfMode = gameMode === 'elf-find'
     const isSecretSanta = gameMode === 'secret-santa'
+    
+    // Determine styling based on mode
+    const menuBg = isSecretSanta 
+      ? 'bg-gradient-to-br from-red-700 via-green-700 to-red-800'
+      : isElfMode 
+        ? 'bg-gradient-to-br from-green-800 via-red-900 to-green-900' 
+        : 'bg-gradient-to-br from-purple-900 via-black to-red-900'
+    
+    const borderColor = isSecretSanta 
+      ? 'border-red-500' 
+      : isElfMode 
+        ? 'border-green-500' 
+        : 'border-red-600'
+    
+    const titleColor = isSecretSanta 
+      ? 'text-red-400' 
+      : isElfMode 
+        ? 'text-green-400' 
+        : 'text-red-500'
+    
+    const titleShadow = isSecretSanta 
+      ? '0 0 10px #dc2626' 
+      : isElfMode 
+        ? '0 0 10px #22c55e' 
+        : '0 0 10px #ff0000'
+    
+    const titleText = isSecretSanta 
+      ? '🎁 Secret Santa 🎁' 
+      : isElfMode 
+        ? '🎄 Elf Finder 🎅' 
+        : '👻 Horror Finder 👻'
+    
     return (
-      <div className={`min-h-screen ${isSecretSanta ? 'bg-gradient-to-br from-red-700 via-green-700 to-red-800' : isElfMode ? 'bg-gradient-to-br from-green-800 via-red-900 to-green-900' : 'bg-gradient-to-br from-purple-900 via-black to-red-900'} flex items-center justify-center p-4`}>
-        <div className={`bg-black bg-opacity-80 p-8 rounded-2xl shadow-2xl max-w-md w-full border-2 ${isSecretSanta ? 'border-red-500' : isElfMode ? 'border-green-500' : 'border-red-600'}`}>
-          <h1 className={`text-5xl font-bold text-center mb-2 ${isSecretSanta ? 'text-red-400' : isElfMode ? 'text-green-400' : 'text-red-500'}`} style={{ textShadow: isSecretSanta ? '0 0 10px #dc2626' : isElfMode ? '0 0 10px #22c55e' : '0 0 10px #ff0000' }}>
-            {isSecretSanta ? '🎁 Secret Santa 🎁' : isElfMode ? '🎄 Elf Finder 🎅' : '👻 Horror Finder 👻'}
+      <div className={`min-h-screen ${menuBg} flex items-center justify-center p-4`}>
+        <div className={`bg-black bg-opacity-80 p-8 rounded-2xl shadow-2xl max-w-md w-full border-2 ${borderColor}`}>
+          <h1 className={`text-5xl font-bold text-center mb-2 ${titleColor}`} style={{ textShadow: titleShadow }}>
+            {titleText}
           </h1>
           <p className="text-center text-gray-300 mb-6 text-sm">
             {isSecretSanta ? 'Pick a name from the bucket to find out who you\'ll give a gift to!' : isElfMode ? 'Find all the elves and Santa before time runs out!' : 'Find all the horror characters before time runs out!'}
@@ -556,7 +592,7 @@ export default function Home() {
                     {secretSantaAssignment}
                   </p>
                   <p className="text-2xl text-white">
-                    You&apos;ll be giving a gift to {secretSantaAssignment}! 🎁
+                    You'll be giving a gift to {secretSantaAssignment}! 🎁
                   </p>
                 </div>
                 
