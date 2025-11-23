@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 
-type GameMode = 'realistic' | 'animated' | 'normal' | 'elf-find' | 'obby'
+type GameMode = 'realistic' | 'animated' | 'normal' | 'elf-find' | 'obby' | 'secret-santa'
 
 interface HorrorCharacter {
   id: string
@@ -61,6 +61,12 @@ const ELF_CHARACTERS = [
   { id: '4', name: 'Santa Claus', emoji: '🎅', points: SANTA_POINTS },
 ]
 
+// Secret Santa participants list (specific to this group as per requirements)
+const SECRET_SANTA_PARTICIPANTS = [
+  'Bennett', 'Hendrix', 'Isaac', 'Vince', 'Daniel', 
+  'Addie', 'Owen', 'Evie', 'Simon', 'Hannah', 'Marina'
+]
+
 export default function Home() {
   const [playerName, setPlayerName] = useState('')
   const [gameStarted, setGameStarted] = useState(false)
@@ -75,6 +81,11 @@ export default function Home() {
   const [timeLeft, setTimeLeft] = useState(GAME_DURATION_SECONDS)
   const [gameOver, setGameOver] = useState(false)
   const jumpscareTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Secret Santa state
+  const [secretSantaAssignment, setSecretSantaAssignment] = useState<string | null>(null)
+  const [availableNames, setAvailableNames] = useState<string[]>([])
+  const [pickedNames, setPickedNames] = useState<string[]>([])
 
   // Generate random house layout
   const generateHouse = useCallback(() => {
@@ -138,6 +149,33 @@ export default function Home() {
     setPlatforms(newPlatforms)
   }, [])
 
+  // Pick a Secret Santa name from the bucket
+  const pickSecretSanta = useCallback(() => {
+    if (availableNames.length === 0) {
+      // Initialize the bucket with all participants
+      const allNames = [...SECRET_SANTA_PARTICIPANTS]
+      const randomIndex = Math.floor(Math.random() * allNames.length)
+      const picked = allNames[randomIndex]
+      setSecretSantaAssignment(picked)
+      setPickedNames([picked])
+      setAvailableNames(allNames.filter((_, index) => index !== randomIndex))
+    } else {
+      // Pick randomly from remaining names
+      const randomIndex = Math.floor(Math.random() * availableNames.length)
+      const picked = availableNames[randomIndex]
+      setSecretSantaAssignment(picked)
+      setPickedNames([...pickedNames, picked])
+      setAvailableNames(availableNames.filter((_, index) => index !== randomIndex))
+    }
+  }, [availableNames, pickedNames])
+
+  // Reset Secret Santa
+  const resetSecretSanta = useCallback(() => {
+    setSecretSantaAssignment(null)
+    setAvailableNames([])
+    setPickedNames([])
+  }, [])
+
   // Place horror characters randomly
   const placeCharacters = useCallback(() => {
     const characterSet = gameMode === 'elf-find' ? ELF_CHARACTERS : HORROR_CHARACTERS
@@ -173,6 +211,15 @@ export default function Home() {
   // Start game
   const startGame = () => {
     if (playerName.trim()) {
+      if (gameMode === 'secret-santa') {
+        // For Secret Santa mode, just show the picker
+        setGameStarted(true)
+        setSecretSantaAssignment(null)
+        setAvailableNames([])
+        setPickedNames([])
+        return
+      }
+      
       setGameStarted(true)
       setScore(0)
       setShowJumpscare(false)
@@ -352,6 +399,13 @@ export default function Home() {
           player: '🏃',
           scary: 'opacity-100'
         }
+      case 'secret-santa':
+        return {
+          bg: 'bg-gradient-to-br from-red-700 via-green-700 to-red-800',
+          text: 'text-white',
+          player: '🎅',
+          scary: 'opacity-100'
+        }
     }
   }
 
@@ -359,14 +413,51 @@ export default function Home() {
 
   if (!gameStarted) {
     const isElfMode = gameMode === 'elf-find'
+    const isSecretSanta = gameMode === 'secret-santa'
+    
+    // Determine styling based on mode
+    const menuBg = isSecretSanta 
+      ? 'bg-gradient-to-br from-red-700 via-green-700 to-red-800'
+      : isElfMode 
+        ? 'bg-gradient-to-br from-green-800 via-red-900 to-green-900' 
+        : 'bg-gradient-to-br from-purple-900 via-black to-red-900'
+    
+    const borderColor = isSecretSanta 
+      ? 'border-red-500' 
+      : isElfMode 
+        ? 'border-green-500' 
+        : 'border-red-600'
+    
+    const titleColor = isSecretSanta 
+      ? 'text-red-400' 
+      : isElfMode 
+        ? 'text-green-400' 
+        : 'text-red-500'
+    
+    const titleShadow = isSecretSanta 
+      ? '0 0 10px #dc2626' 
+      : isElfMode 
+        ? '0 0 10px #22c55e' 
+        : '0 0 10px #ff0000'
+    
+    const titleText = isSecretSanta 
+      ? '🎁 Secret Santa 🎁' 
+      : isElfMode 
+        ? '🎄 Elf Finder 🎅' 
+        : '👻 Horror Finder 👻'
+    
     return (
-      <div className={`min-h-screen ${isElfMode ? 'bg-gradient-to-br from-green-800 via-red-900 to-green-900' : 'bg-gradient-to-br from-purple-900 via-black to-red-900'} flex items-center justify-center p-4`}>
-        <div className={`bg-black bg-opacity-80 p-8 rounded-2xl shadow-2xl max-w-md w-full border-2 ${isElfMode ? 'border-green-500' : 'border-red-600'}`}>
-          <h1 className={`text-5xl font-bold text-center mb-2 ${isElfMode ? 'text-green-400' : 'text-red-500'}`} style={{ textShadow: isElfMode ? '0 0 10px #22c55e' : '0 0 10px #ff0000' }}>
-            {isElfMode ? '🎄 Elf Finder 🎅' : '👻 Horror Finder 👻'}
+      <div className={`min-h-screen ${menuBg} flex items-center justify-center p-4`}>
+        <div className={`bg-black bg-opacity-80 p-8 rounded-2xl shadow-2xl max-w-md w-full border-2 ${borderColor}`}>
+          <h1 className={`text-5xl font-bold text-center mb-2 ${titleColor}`} style={{ textShadow: titleShadow }}>
+            {titleText}
           </h1>
           <p className="text-center text-gray-300 mb-6 text-sm">
-            {isElfMode ? 'Find all the elves and Santa before time runs out!' : 'Find all the horror characters before time runs out!'}
+            {isSecretSanta 
+              ? 'Pick a name from the bucket to find out who you\'ll give a gift to!' 
+              : isElfMode 
+                ? 'Find all the elves and Santa before time runs out!' 
+                : 'Find all the horror characters before time runs out!'}
           </p>
           
           <div className="mb-6">
@@ -384,6 +475,16 @@ export default function Home() {
           <div className="mb-6">
             <label className="block text-white mb-2 font-semibold">Select Game Mode:</label>
             <div className="space-y-2">
+              <button
+                onClick={() => setGameMode('secret-santa')}
+                className={`w-full px-4 py-3 rounded-lg font-semibold transition-all ${
+                  gameMode === 'secret-santa'
+                    ? 'bg-red-600 text-white border-2 border-white'
+                    : 'bg-red-700 text-gray-300 border-2 border-red-600 hover:bg-red-600'
+                }`}
+              >
+                🎁 Secret Santa Picker (NEW!)
+              </button>
               <button
                 onClick={() => setGameMode('obby')}
                 className={`w-full px-4 py-3 rounded-lg font-semibold transition-all ${
@@ -446,16 +547,137 @@ export default function Home() {
           </button>
 
           <div className="mt-6 text-center text-gray-400 text-sm">
-            <p className="mb-2">🎮 Use Arrow Keys or WASD to move</p>
-            {gameMode === 'obby' ? (
-              <p>Jump across platforms to reach the finish! Fall off and get a jumpscare! 😱</p>
+            {gameMode === 'secret-santa' ? (
+              <>
+                <p className="mb-2">🎁 Pick a name from the bucket!</p>
+                <p>Participants: {SECRET_SANTA_PARTICIPANTS.join(', ')}</p>
+              </>
             ) : (
               <>
-                <p>Find: {(gameMode === 'elf-find' ? ELF_CHARACTERS : HORROR_CHARACTERS).map(c => c.emoji + ' ' + c.name).join(', ')}</p>
-                {gameMode === 'elf-find' && (
-                  <p className="mt-2 text-yellow-400 font-semibold">⭐ Finding Santa gives 10 billion points! ⭐</p>
+                <p className="mb-2">🎮 Use Arrow Keys or WASD to move</p>
+                {gameMode === 'obby' ? (
+                  <p>Jump across platforms to reach the finish! Fall off and get a jumpscare! 😱</p>
+                ) : (
+                  <>
+                    <p>Find: {(gameMode === 'elf-find' ? ELF_CHARACTERS : HORROR_CHARACTERS).map(c => c.emoji + ' ' + c.name).join(', ')}</p>
+                    {gameMode === 'elf-find' && (
+                      <p className="mt-2 text-yellow-400 font-semibold">⭐ Finding Santa gives 10 billion points! ⭐</p>
+                    )}
+                  </>
                 )}
               </>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Secret Santa mode screen
+  if (gameMode === 'secret-santa') {
+    // Calculate names in bucket for display:
+    // - If availableNames has items, show that count
+    // - If no picks yet (fresh bucket), show total participant count
+    // - If bucket is empty (all picked), show 0
+    const namesInBucket = availableNames.length || (pickedNames.length === 0 ? SECRET_SANTA_PARTICIPANTS.length : 0)
+    
+    return (
+      <div className={`min-h-screen ${style.bg} flex items-center justify-center p-4`}>
+        <div className="max-w-2xl w-full">
+          <div className="bg-black bg-opacity-80 p-8 rounded-2xl shadow-2xl border-2 border-red-500">
+            <h1 className="text-5xl font-bold text-center mb-4 text-red-400" style={{ textShadow: '0 0 10px #dc2626' }}>
+              🎁 Secret Santa Picker 🎁
+            </h1>
+            <h2 className="text-2xl text-center mb-8 text-white">
+              Hello, {playerName}!
+            </h2>
+
+            {secretSantaAssignment ? (
+              <div className="text-center">
+                <div className="bg-green-900 bg-opacity-50 p-8 rounded-xl border-2 border-green-500 mb-6">
+                  <p className="text-xl text-white mb-4">🎅 You picked:</p>
+                  <p className="text-6xl font-bold text-yellow-400 mb-4 animate-bounce">
+                    {secretSantaAssignment}
+                  </p>
+                  <p className="text-2xl text-white">
+                    You'll be giving a gift to {secretSantaAssignment}! 🎁
+                  </p>
+                </div>
+                
+                <div className="mb-6 text-gray-300">
+                  <p className="mb-2">Names picked: {pickedNames.length} / {SECRET_SANTA_PARTICIPANTS.length}</p>
+                  <p className="text-sm">Remaining in bucket: {availableNames.length}</p>
+                </div>
+
+                <div className="flex gap-4 justify-center">
+                  {availableNames.length > 0 && (
+                    <button
+                      onClick={() => setSecretSantaAssignment(null)}
+                      className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-xl transition-colors"
+                      title="Clear the current assignment so the next person can pick"
+                    >
+                      Let someone else pick
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setGameStarted(false)
+                      resetSecretSanta()
+                    }}
+                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg text-xl transition-colors"
+                  >
+                    Back to Menu
+                  </button>
+                  {availableNames.length === 0 && (
+                    <button
+                      onClick={resetSecretSanta}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg text-xl transition-colors"
+                    >
+                      🔄 Reset Bucket
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center">
+                <div className="bg-red-900 bg-opacity-50 p-12 rounded-xl border-2 border-red-600 mb-8">
+                  <div className="text-8xl mb-6 animate-bounce">🎄</div>
+                  <p className="text-3xl text-white mb-6">
+                    Pick from the bucket!
+                  </p>
+                  <div className="text-lg text-gray-300 mb-4">
+                    <p>Names in bucket: {namesInBucket}</p>
+                    {pickedNames.length > 0 && (
+                      <p className="mt-2">Already picked: {pickedNames.length}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={pickSecretSanta}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-4 px-12 rounded-lg text-2xl transition-all transform hover:scale-105 shadow-lg"
+                  >
+                    🎁 Pick a Name!
+                  </button>
+                </div>
+
+                <div className="text-center">
+                  <button
+                    onClick={() => {
+                      setGameStarted(false)
+                      resetSecretSanta()
+                    }}
+                    className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+                  >
+                    Back to Menu
+                  </button>
+                </div>
+
+                <div className="mt-8 text-center text-gray-400">
+                  <p className="text-sm mb-2">Participants:</p>
+                  <p className="text-xs">
+                    {SECRET_SANTA_PARTICIPANTS.join(', ')}
+                  </p>
+                </div>
+              </div>
             )}
           </div>
         </div>
